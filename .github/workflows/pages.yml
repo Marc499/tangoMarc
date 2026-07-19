@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [claude/tango-rhythm-trainer-4lzo6w]
+    branches: [main, claude/tango-rhythm-trainer-4lzo6w]
   workflow_dispatch:
 
 permissions:

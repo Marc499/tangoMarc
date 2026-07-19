@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tango Contemporáneo – Rhythmus lernen</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0f;
+      color: #e8e0d0;
+      font-family: 'Georgia', serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.6rem 1rem 3rem;
+    }
+
+    h1 {
+      font-size: 1.45rem;
+      letter-spacing: 0.15em;
+      color: #c8a87a;
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+    .subtitle {
+      font-size: 0.78rem;
+      color: #6a5a4a;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.4rem;
+    }
+
+    /* ── Cue display ── */
+    .cue-display {
+      width: 100%;
+      max-width: 460px;
+      min-height: 88px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: #0f0d09;
+      border: 1px solid #2a2018;
+      margin-bottom: 1.2rem;
+    }
+    .cue-main {
+      font-size: 2.8rem;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      line-height: 1;
+      color: #3a3028;
+      transition: color 0.08s, text-shadow 0.08s;
+    }
+    .cue-count {
+      font-size: 0.9rem;
+      color: #6a5a4a;
+      letter-spacing: 0.2em;
+      margin-top: 0.25rem;
+      min-height: 1.2em;
+    }
+    .cue-lang .cue-main { color: #e05030; text-shadow: 0 0 28px rgba(220,80,40,0.55); }
+    .cue-kurz .cue-main { color: #30a0e0; text-shadow: 0 0 28px rgba(40,140,220,0.55); }
+
+    /* ── Pattern row ── */
+    .pattern-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .step-col { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+
+    .beat-block {
+      border-radius: 7px;
+      border: 2px solid #2a2018;
+      background: #110e08;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.4rem 0.3rem 0.35rem;
+      transition: background 0.08s, border-color 0.08s, transform 0.08s, box-shadow 0.08s;
+      user-select: none;
+      height: 76px;
+    }
+    .beat-block.lang { width: 74px; }
+    .beat-block.kurz { width: 48px; }
+
+    .beat-block.active-lang {
+      background: #5a1808; border-color: #e05030;
+      transform: scale(1.09); box-shadow: 0 0 16px rgba(220,80,40,0.4);
+    }
+    .beat-block.active-kurz {
+      background: #081830; border-color: #30a0e0;
+      transform: scale(1.09); box-shadow: 0 0 16px rgba(40,140,220,0.4);
+    }
+
+    .bb-foot {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.62rem; font-weight: bold;
+      transition: background 0.08s, color 0.08s;
+    }
+    .bb-foot.L { background: #1e1808; color: #7a6030; border: 1px solid #3a2a14; }
+    .bb-foot.R { background: #081818; color: #308070; border: 1px solid #143028; }
+    .beat-block.active-lang .bb-foot.L,
+    .beat-block.active-kurz .bb-foot.L { background: #e8b030; color: #080600; border-color: #e8b030; }
+    .beat-block.active-lang .bb-foot.R,
+    .beat-block.active-kurz .bb-foot.R { background: #30c0a0; color: #001010; border-color: #30c0a0; }
+
+    .bb-name { font-size: 0.62rem; letter-spacing: 0.07em; color: #5a4a38; transition: color 0.08s; }
+    .beat-block.active-lang .bb-name,
+    .beat-block.active-kurz .bb-name { color: #e8dcc8; }
+    .bb-dir { font-size: 0.95rem; line-height: 1; color: #3a2a1a; transition: color 0.08s; }
+    .beat-block.active-lang .bb-dir { color: #e8c070; }
+    .beat-block.active-kurz .bb-dir { color: #70d0f0; }
+    .beat-num { font-size: 0.58rem; color: #4a3a28; letter-spacing: 0.04em; }
+
+    /* ── Couple view ── */
+    .couple-view {
+      width: 100%;
+      max-width: 460px;
+      background: #0d0b07;
+      border: 1px solid #2a2018;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 0.8rem;
+      transition: border-color 0.12s;
+    }
+    .couple-view.cv-lang { border-color: rgba(220,80,40,0.4); }
+    .couple-view.cv-kurz { border-color: rgba(40,140,220,0.4); }
+
+    .cv-columns {
+      display: flex;
+      min-height: 120px;
+    }
+
+    .cv-person {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.9rem 0.4rem 0.7rem;
+    }
+
+    .cv-label {
+      font-size: 0.66rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6a5a4a;
+    }
+    .cv-label em { font-style: normal; color: #4a3a28; font-size: 0.58rem; }
+
+    .cv-feet {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .cv-foot {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: bold; letter-spacing: 0;
+      transition: all 0.1s;
+    }
+    .cv-foot.dim {
+      background: #1a1610; color: #4a3a28;
+      border: 2px solid #2a2018;
+    }
+    .cv-foot.active-lang {
+      background: #e05030; color: #fff;
+      border: 2px solid #ff7050;
+      box-shadow: 0 0 14px rgba(220,80,40,0.55);
+      transform: scale(1.12);
+    }
+    .cv-foot.active-kurz {
+      background: #30a0e0; color: #fff;
+      border: 2px solid #60c0f0;
+      box-shadow: 0 0 14px rgba(40,140,220,0.55);
+      transform: scale(1.12);
+    }
+
+    .cv-arrow {
+      font-size: 1.7rem;
+      line-height: 1;
+      color: #4a3a28;
+      transition: color 0.1s;
+      min-height: 1.8rem;
+    }
+    .cv-person.p-lang .cv-arrow { color: #e05030; }
+    .cv-person.p-kurz .cv-arrow { color: #30a0e0; }
+
+    .cv-desc {
+      font-size: 0.68rem;
+      color: #7a6a5a;
+      text-align: center;
+      min-height: 1em;
+      max-width: 100px;
+      line-height: 1.3;
+    }
+
+    .cv-divider {
+      width: 1px;
+      background: #2a2018;
+      margin: 0.6rem 0;
+    }
+
+    /* Tip/note strip at the bottom */
+    .cv-note {
+      background: #1a1408;
+      border-top: 1px solid #2a2018;
+      padding: 0.45rem 1rem;
+      font-size: 0.68rem;
+      color: #c8a87a;
+      text-align: center;
+      letter-spacing: 0.04em;
+      display: none;
+    }
+    .cv-note.visible { display: block; }
+
+    /* Frau orientation marker */
+    .cv-facing {
+      font-size: 0.58rem;
+      color: #3a2a18;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Pattern description ── */
+    .pattern-desc {
+      font-size: 0.74rem; color: #5a4a38; font-style: italic;
+      text-align: center; max-width: 360px;
+      margin-bottom: 1.4rem; line-height: 1.55;
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 1rem;
+      width: 100%; max-width: 400px;
+    }
+    .pattern-selector { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
+    .pattern-btn {
+      padding: 0.35rem 0.85rem; font-size: 0.72rem; letter-spacing: 0.06em;
+      background: #110e08; color: #7a6a5a;
+      border: 1px solid #2a2018; border-radius: 20px;
+      cursor: pointer; font-family: 'Georgia', serif; transition: all 0.15s;
+    }
+    .pattern-btn.active { background: #201808; color: #c8a87a; border-color: #c8a87a; }
+
+    .mode-row { display: flex; gap: 0.4rem; }
+    .mode-btn {
+      padding: 0.3rem 0.75rem; font-size: 0.7rem;
+      background: #110e08; color: #5a4a38;
+      border: 1px solid #1e1808; border-radius: 4px;
+      cursor: pointer; font-family: 'Georgia', serif; transition: all 0.15s;
+    }
+    .mode-btn.active { background: #1c1408; color: #c8a87a; border-color: #5a4030; }
+
+    .btn-start {
+      width: 100%; padding: 0.9rem; font-size: 1rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      background: #c8a87a; color: #0a0a0f;
+      border: none; border-radius: 8px;
+      cursor: pointer; font-family: 'Georgia', serif; transition: background 0.2s;
+    }
+    .btn-start:hover { background: #e0c090; }
+    .btn-start.running { background: #1a1008; color: #c8a87a; border: 1px solid #c8a87a; }
+
+    .slider-row { width: 100%; display: flex; flex-direction: column; gap: 0.35rem; }
+    .slider-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.76rem; color: #7a6a5a; letter-spacing: 0.06em;
+    }
+    input[type=range] { width: 100%; accent-color: #c8a87a; }
+
+    .legend {
+      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+      font-size: 0.65rem; color: #5a4a38; margin-top: 1.5rem;
+    }
+    .legend span { display: flex; align-items: center; gap: 0.3rem; }
+    .ld { width: 10px; height: 10px; }
+    .ld-la { background: #e05030; border-radius: 2px; }
+    .ld-ku { background: #30a0e0; border-radius: 2px; }
+    .ld-m  { background: #e8b030; border-radius: 50%; }
+    .ld-f  { background: #e070a0; border-radius: 50%; }
+  </style>
+</head>
+<body>
+
+<h1>Tango Contemporáneo</h1>
+<p class="subtitle">Rhythmus-Trainer · Paar-Ansicht</p>
+
+<!-- Cue display -->
+<div class="cue-display cue-idle" id="cueDisplay">
+  <div class="cue-main" id="cueMain">—</div>
+  <div class="cue-count" id="cueCount"></div>
+</div>
+
+<!-- Pattern blocks -->
+<div class="pattern-row" id="patternRow"></div>
+
+<!-- Couple view -->
+<div class="couple-view" id="coupleView">
+  <div class="cv-columns">
+
+    <div class="cv-person" id="mannPerson">
+      <div class="cv-label">Mann <em>· Führend</em></div>
+      <div class="cv-feet">
+        <div class="cv-foot dim" id="mFL">L</div>
+        <div class="cv-foot dim" id="mFR">R</div>
+      </div>
+      <div class="cv-arrow" id="mArr">—</div>
+      <div class="cv-desc" id="mDsc"></div>
+    </div>
+
+    <div class="cv-divider"></div>
+
+    <div class="cv-person" id="frauPerson">
+      <div class="cv-label">Frau <em>· Folgend</em></div>
+      <!-- Frau's R is on physical-left (she faces opposite), shown from HER perspective: L left, R right -->
+      <div class="cv-feet">
+        <div class="cv-foot dim" id="fFL">L</div>
+        <div class="cv-foot dim" id="fFR">R</div>
+      </div>
+      <div class="cv-arrow" id="fArr">—</div>
+      <div class="cv-desc" id="fDsc"></div>
+    </div>
+
+  </div>
+  <div class="cv-note" id="cvNote"></div>
+</div>
+
+<div class="pattern-desc" id="patternDesc"></div>
+
+<!-- Controls -->
+<div class="controls">
+  <div class="pattern-selector" id="patternSelector"></div>
+
+  <div class="mode-row">
+    <button class="mode-btn active" id="modeLangKurz" onclick="setMode('langkurz')">Lang / Kurz</button>
+    <button class="mode-btn" id="modeZahl" onclick="setMode('zahl')">1 – 2 – 3 …</button>
+    <button class="mode-btn" id="modeBoth" onclick="setMode('both')">Beides</button>
+  </div>
+
+  <button class="btn-start" id="startBtn" onclick="toggle()">▶ Start</button>
+
+  <div class="slider-row">
+    <div class="slider-label"><span>Tempo</span><span id="bpmLabel">50 BPM</span></div>
+    <input type="range" id="bpmSlider" min="36" max="96" value="50" oninput="setBpm(this.value)">
+  </div>
+
+  <div class="slider-row">
+    <div class="slider-label"><span>Lautstärke</span><span id="volLabel">70 %</span></div>
+    <input type="range" id="volSlider" min="0" max="100" value="70" oninput="setVol(this.value)">
+  </div>
+</div>
+
+<div class="legend">
+  <span><span class="ld ld-la"></span> LANG = 2 Schläge</span>
+  <span><span class="ld ld-ku"></span> KURZ = 1 Schlag</span>
+  <span><span class="ld ld-m"></span> Mann-Fuß aktiv</span>
+  <span><span class="ld ld-f"></span> Frau-Fuß aktiv</span>
+</div>
+
+<script>
+// ── Direction map ────────────────────────────────────────────────────────────
+const DIR = {
+  forward:  { arrow:'↑', label:'vorwärts'              },
+  back:     { arrow:'↓', label:'rückwärts'             },
+  'side-l': { arrow:'←', label:'links Seite'           },
+  'side-r': { arrow:'→', label:'rechts Seite'          },
+  'fwd-l':  { arrow:'↖', label:'schräg links vor'      },
+  'fwd-r':  { arrow:'↗', label:'schräg rechts vor'     },
+  'bck-l':  { arrow:'↙', label:'schräg links zurück'   },
+  'bck-r':  { arrow:'↘', label:'schräg rechts zurück'  },
+  close:    { arrow:'↕', label:'schließen'             },
+  weight:   { arrow:'●', label:'Gewicht'               },
+};
+
+// ── Patterns ─────────────────────────────────────────────────────────────────
+// Each step: leader (Mann) data + follower (Frau) data from each person's OWN perspective
+const PATTERNS = [
+  {
+    id: 'wiegeschritt', label: 'Wiegeschritt',
+    desc: 'Gewichtsverlagerung auf der Stelle — kein Schritt, nur Wiegen. Beide Füße bleiben am Boden.',
+    steps: [
+      { type:'lang', beats:2, name:'LANG', foot:'L', dir:'weight', desc:'Gewicht links',
+        follower:{ foot:'R', dir:'weight', desc:'Gewicht rechts' } },
+      { type:'lang', beats:2, name:'LANG', foot:'R', dir:'weight', desc:'Gewicht rechts',
+        follower:{ foot:'L', dir:'weight', desc:'Gewicht links' } },
+    ]
+  },
+  {
+    id: 'caminada', label: 'Caminada',
+    desc: 'Der Tango-Gang: gleitend, geerdet, fast lautlos. Lang – Lang – Kurz – Kurz.',
+    steps: [
+      {
+        type:'lang', beats:2, name:'LANG', foot:'L', dir:'fwd-l',
+        desc:'Links schräg vor',
+        follower:{ foot:'R', dir:'bck-r', desc:'Rechts schräg zurück' },
+        note:'↖ Fuß schräg zwischen ihre Füße — nicht auf die Füße der Frau treten!'
+      },
+      {
+        type:'lang', beats:2, name:'LANG', foot:'R', dir:'fwd-r',
+        desc:'Rechts schräg vor',
+        follower:{ foot:'L', dir:'bck-l', desc:'Links schräg zurück' },
+        note:'↗ Wieder schräg — jeder Schritt geht zwischen ihre Füße'
+      },
+      {
+        type:'kurz', beats:1, name:'KURZ', foot:'L', dir:'fwd-l',
+        desc:'Links schräg vor',
+        follower:{ foot:'R', dir:'bck-r', desc:'Rechts schräg zurück' },
+        note:'Schnell, aber weiterhin schräg zwischen ihre Füße'
+      },
+      {
+        type:'kurz', beats:1, name:'KURZ', foot:'R', dir:'close',
+        desc:'Rechts schließen',
+        follower:{ foot:'L', dir:'close', desc:'Links schließen' }
+      },
+    ]
+  },
+  {
+    id: 'marcha', label: 'Marcha',
+    desc: 'Gleichmäßiges Schreiten — jeder Schlag ein Schritt. Ideal zum Eingewöhnen.',
+    steps: [
+      { type:'kurz', beats:1, name:'KURZ', foot:'L', dir:'fwd-l', desc:'Links schräg vor',
+        follower:{ foot:'R', dir:'bck-r', desc:'Rechts zurück' },
+        note:'Fuß schräg zwischen die Füße der Frau' },
+      { type:'kurz', beats:1, name:'KURZ', foot:'R', dir:'fwd-r', desc:'Rechts schräg vor',
+        follower:{ foot:'L', dir:'bck-l', desc:'Links zurück' } },
+      { type:'kurz', beats:1, name:'KURZ', foot:'L', dir:'fwd-l', desc:'Links schräg vor',
+        follower:{ foot:'R', dir:'bck-r', desc:'Rechts zurück' },
+        note:'Fuß schräg zwischen die Füße der Frau' },
+      { type:'kurz', beats:1, name:'KURZ', foot:'R', dir:'fwd-r', desc:'Rechts schräg vor',
+        follower:{ foot:'L', dir:'bck-l', desc:'Links zurück' } },
+    ]
+  },
+  {
+    id: 'synco', label: 'Synkope',
+    desc: 'Zwischen die Hauptschläge treten — gibt dem Tango seinen charakteristischen Schwung.',
+    steps: [
+      { type:'kurz', beats:1, name:'KURZ', foot:'L', dir:'fwd-l', desc:'Links schräg vor',
+        follower:{ foot:'R', dir:'bck-r', desc:'Rechts zurück' } },
+      { type:'kurz', beats:1, name:'KURZ', foot:'R', dir:'side-r', desc:'Rechts Seite',
+        follower:{ foot:'L', dir:'side-l', desc:'Links Seite' },
+        note:'Seitschritt — beide gehen in dieselbe Richtung' },
+      { type:'lang', beats:2, name:'LANG', foot:'L', dir:'fwd-l', desc:'Links schräg vor',
+        follower:{ foot:'R', dir:'bck-r', desc:'Rechts zurück' } },
+      { type:'kurz', beats:1, name:'KURZ', foot:'R', dir:'fwd-r', desc:'Rechts schräg vor',
+        follower:{ foot:'L', dir:'bck-l', desc:'Links zurück' } },
+      { type:'kurz', beats:1, name:'KURZ', foot:'L', dir:'close', desc:'Links schließen',
+        follower:{ foot:'R', dir:'close', desc:'Rechts schließen' } },
+    ]
+  },
+  {
+    id: 'ocho-atras', label: 'Ocho atrás',
+    desc: 'Rück-Ocho: Die Frau dreht (Pivot) und tritt zurück — die klassische Acht-Figur des Tangos.',
+    steps: [
+      {
+        type:'lang', beats:2, name:'LANG', foot:'L', dir:'fwd-l',
+        desc:'Links schräg vor',
+        follower:{ foot:'R', dir:'bck-r', desc:'↺ Pivot links + rechts zurück' },
+        note:'Frau dreht sich nach links und tritt mit dem rechten Fuß zurück'
+      },
+      {
+        type:'lang', beats:2, name:'LANG', foot:'R', dir:'fwd-r',
+        desc:'Rechts schräg vor',
+        follower:{ foot:'L', dir:'bck-l', desc:'↻ Pivot rechts + links zurück' },
+        note:'Frau dreht sich nach rechts und tritt mit dem linken Fuß zurück'
+      },
+      {
+        type:'lang', beats:2, name:'LANG', foot:'L', dir:'fwd-l',
+        desc:'Links schräg vor',
+        follower:{ foot:'R', dir:'bck-r', desc:'↺ Pivot links + rechts zurück' },
+        note:'Frau dreht sich nach links und tritt mit dem rechten Fuß zurück'
+      },
+      {
+        type:'lang', beats:2, name:'LANG', foot:'R', dir:'fwd-r',
+        desc:'Rechts schräg vor',
+        follower:{ foot:'L', dir:'bck-l', desc:'↻ Pivot rechts + links zurück' },
+        note:'Frau dreht sich nach rechts und tritt mit dem linken Fuß zurück'
+      },
+    ]
+  },
+  {
+    id: 'ocho-adelante', label: 'Ocho adelante',
+    desc: 'Vor-Ocho: Die Frau dreht und tritt vorwärts. Der Mann öffnet seitlich und schafft Raum.',
+    steps: [
+      {
+        type:'lang', beats:2, name:'LANG', foot:'L', dir:'side-l',
+        desc:'Links öffnen',
+        follower:{ foot:'R', dir:'fwd-r', desc:'↻ Pivot links + rechts vor' },
+        note:'Mann öffnet nach links — Frau dreht sich und tritt mit rechts vorwärts'
+      },
+      {
+        type:'lang', beats:2, name:'LANG', foot:'R', dir:'side-r',
+        desc:'Rechts öffnen',
+        follower:{ foot:'L', dir:'fwd-l', desc:'↺ Pivot rechts + links vor' },
+        note:'Mann öffnet nach rechts — Frau dreht sich und tritt mit links vorwärts'
+      },
+      {
+        type:'lang', beats:2, name:'LANG', foot:'L', dir:'side-l',
+        desc:'Links öffnen',
+        follower:{ foot:'R', dir:'fwd-r', desc:'↻ Pivot links + rechts vor' },
+        note:'Mann öffnet nach links — Frau dreht sich und tritt mit rechts vorwärts'
+      },
+      {
+        type:'lang', beats:2, name:'LANG', foot:'R', dir:'side-r',
+        desc:'Rechts öffnen',
+        follower:{ foot:'L', dir:'fwd-l', desc:'↺ Pivot rechts + links vor' },
+        note:'Mann öffnet nach rechts — Frau dreht sich und tritt mit links vorwärts'
+      },
+    ]
+  }
+];
+
+// ── App State ────────────────────────────────────────────────────────────────
+let mode             = 'langkurz';
+let running          = false;
+let currentPatternId = 'wiegeschritt';
+let bpm              = 50;
+let volume           = 0.7;
+let scheduleTimeout  = null;
+let nextBeatTime     = 0;
+let beatIndex        = 0;
+let flashTimeout     = null;
+
+function currentPattern() { return PATTERNS.find(p => p.id === currentPatternId); }
+function totalBeats()     { return currentPattern().steps.reduce((s,st) => s + st.beats, 0); }
+function beatDuration()   { return 60 / bpm; }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AUDIO ENGINE
+// ══════════════════════════════════════════════════════════════════════════════
+let actx      = null;
+let masterOut = null;
+let reverbIn  = null;
+
+const HARM = {
+  Am: { chord:[220.0, 261.6, 329.6], bass:110.0 },
+  E7: { chord:[164.8, 207.7, 246.9], bass: 82.4 },
+};
+function getHarmony(i) { return Math.floor(i/4)%2===0 ? HARM.Am : HARM.E7; }
+
+function ensureCtx() {
+  if (!actx) { actx = new (window.AudioContext||window.webkitAudioContext)(); setupAudio(); }
+  if (actx.state==='suspended') actx.resume();
+}
+
+function setupAudio() {
+  masterOut = actx.createGain();
+  masterOut.gain.value = 0.82;
+  masterOut.connect(actx.destination);
+
+  const conv = actx.createConvolver();
+  const sr=actx.sampleRate, len=Math.floor(sr*1.8);
+  const buf=actx.createBuffer(2,len,sr);
+  for(let c=0;c<2;c++){const d=buf.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.1);}
+  conv.buffer=buf;
+  const wet=actx.createGain(); wet.gain.value=0.18;
+  conv.connect(wet); wet.connect(masterOut);
+  reverbIn=conv;
+}
+
+function addTremolo(t,target,depth,dur) {
+  const lfo=actx.createOscillator(), lg=actx.createGain();
+  lfo.frequency.setValueAtTime(5.2+Math.random()*0.6,t);
+  lg.gain.setValueAtTime(0.001,t+0.05);
+  lg.gain.linearRampToValueAtTime(depth,t+0.15);
+  lg.gain.setValueAtTime(depth,t+dur*0.6);
+  lg.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  lfo.connect(lg); lg.connect(target);
+  lfo.start(t+0.05); lfo.stop(t+dur+0.05);
+}
+
+function playBando(t,freqs,dur,vol,accent) {
+  freqs.forEach((f,fi)=>{
+    [{type:'sawtooth',dtn:0,share:0.60},{type:'square',dtn:4.5,share:0.40}].forEach(cfg=>{
+      const osc=actx.createOscillator(),filt=actx.createBiquadFilter(),gain=actx.createGain();
+      osc.type=cfg.type;
+      osc.frequency.setValueAtTime(f*(1+(fi*cfg.dtn+1)*0.001),t);
+      filt.type='lowpass';
+      filt.frequency.setValueAtTime(1300,t);
+      filt.frequency.exponentialRampToValueAtTime(480,t+Math.max(dur,0.25));
+      filt.Q.setValueAtTime(1.9,t);
+      const v=(vol/freqs.length)*cfg.share*(fi===0?1:fi===1?0.62:0.40);
+      gain.gain.setValueAtTime(0.001,t);
+      gain.gain.linearRampToValueAtTime(v,t+0.018);
+      if(accent){
+        gain.gain.setValueAtTime(v*0.88,t+0.06);
+        gain.gain.exponentialRampToValueAtTime(v*0.48,t+dur*0.72);
+        gain.gain.exponentialRampToValueAtTime(0.001,t+dur+0.05);
+        if(fi===0&&cfg.type==='sawtooth') addTremolo(t,gain.gain,v*0.10,dur);
+      } else {
+        gain.gain.exponentialRampToValueAtTime(v*0.22,t+0.10);
+        gain.gain.exponentialRampToValueAtTime(0.001,t+dur);
+      }
+      osc.connect(filt); filt.connect(gain);
+      gain.connect(masterOut); if(reverbIn) gain.connect(reverbIn);
+      osc.start(t); osc.stop(t+dur+0.1);
+    });
+  });
+}
+
+function playBass(t,freq,vol) {
+  const o1=actx.createOscillator(),o2=actx.createOscillator();
+  const filt=actx.createBiquadFilter(),gain=actx.createGain(),g2=actx.createGain();
+  o1.type='triangle'; o2.type='sine';
+  o1.frequency.setValueAtTime(freq,t); o2.frequency.setValueAtTime(freq*2,t);
+  filt.type='lowpass'; filt.frequency.setValueAtTime(520,t);
+  g2.gain.value=0.32;
+  gain.gain.setValueAtTime(0.001,t);
+  gain.gain.linearRampToValueAtTime(vol,t+0.007);
+  gain.gain.exponentialRampToValueAtTime(vol*0.38,t+0.13);
+  gain.gain.exponentialRampToValueAtTime(0.001,t+0.52);
+  o1.connect(filt); o2.connect(g2); g2.connect(filt); filt.connect(gain);
+  gain.connect(masterOut);
+  o1.start(t); o1.stop(t+0.58); o2.start(t); o2.stop(t+0.58);
+}
+
+function playRim(t,vol) {
+  const sr=actx.sampleRate,len=Math.floor(sr*0.07);
+  const buf=actx.createBuffer(1,len,sr),d=buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(sr*0.010));
+  const src=actx.createBufferSource(); src.buffer=buf;
+  const filt=actx.createBiquadFilter(); filt.type='bandpass';
+  filt.frequency.setValueAtTime(1700,t); filt.Q.setValueAtTime(9,t);
+  const gain=actx.createGain();
+  gain.gain.setValueAtTime(vol*0.22,t);
+  gain.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+  src.connect(filt); filt.connect(gain); gain.connect(masterOut);
+  src.start(t); src.stop(t+0.08);
+}
+
+// ── Scheduler ─────────────────────────────────────────────────────────────────
+function getBeatInfo(beatIdx,pattern) {
+  let count=0,zahl=1;
+  for(let s=0;s<pattern.steps.length;s++){
+    const st=pattern.steps[s];
+    for(let b=0;b<st.beats;b++){
+      if(count===beatIdx) return {step:s,beatWithinStep:b,stepType:st.type,
+        stepName:st.name,foot:st.foot,dir:st.dir,desc:st.desc,
+        follower:st.follower,note:st.note,zahl};
+      count++; zahl++;
+    }
+  }
+  return null;
+}
+
+function schedule() {
+  if(!running) return;
+  ensureCtx();
+  const pattern=currentPattern(),total=totalBeats(),bd=beatDuration();
+  while(nextBeatTime<actx.currentTime+0.13){
+    const info=getBeatInfo(beatIndex%total,pattern),t=nextBeatTime;
+    const harm=getHarmony(beatIndex);
+    if(info.stepType==='lang'){
+      if(info.beatWithinStep===0){
+        playBando(t,harm.chord,Math.min(bd*1.85,1.5),volume*0.88,true);
+        playBass(t,harm.bass,volume*1.05); playRim(t,volume);
+      } else { playBass(t,harm.bass*1.498,volume*0.28); }
+    } else {
+      playBando(t,[harm.chord[0],harm.chord[2]],Math.min(bd*0.52,0.38),volume*0.72,false);
+      playBass(t,harm.bass,volume*0.88); playRim(t,volume*0.55);
+    }
+    const delay=Math.max(0,(t-actx.currentTime)*1000);
+    const snap={...info};
+    setTimeout(()=>updateVisuals(snap),delay);
+    nextBeatTime+=bd; beatIndex++;
+  }
+  scheduleTimeout=setTimeout(schedule,50);
+}
+
+// ── Visuals ───────────────────────────────────────────────────────────────────
+function updateVisuals(info) {
+  if(!running) return;
+
+  // Cue
+  const cueEl=document.getElementById('cueDisplay');
+  const cueMain=document.getElementById('cueMain'),cueCount=document.getElementById('cueCount');
+  if(mode==='langkurz'){ cueMain.textContent=info.stepName; cueCount.textContent=''; }
+  else if(mode==='zahl'){ cueMain.textContent=info.zahl; cueCount.textContent=''; }
+  else{ cueMain.textContent=info.stepName; cueCount.textContent='— '+info.zahl+' —'; }
+  cueEl.className='cue-display '+(info.stepType==='lang'?'cue-lang':'cue-kurz');
+
+  // Beat blocks
+  document.querySelectorAll('.beat-block').forEach((bl,i)=>{
+    bl.classList.remove('active-lang','active-kurz');
+    if(i===info.step) bl.classList.add(info.stepType==='lang'?'active-lang':'active-kurz');
+  });
+
+  // Couple view
+  showCouple(info);
+
+  if(flashTimeout) clearTimeout(flashTimeout);
+  flashTimeout=setTimeout(()=>{
+    document.getElementById('cueDisplay').className='cue-display cue-idle';
+    document.getElementById('cueMain').textContent='—';
+    document.getElementById('cueCount').textContent='';
+    clearCouple();
+    document.querySelectorAll('.beat-block').forEach(bl=>bl.classList.remove('active-lang','active-kurz'));
+  }, beatDuration()*1000*0.72);
+}
+
+function showCouple(info) {
+  const t = info.stepType; // 'lang' or 'kurz'
+  const cls = 'active-'+t;
+
+  // Couple-view border
+  document.getElementById('coupleView').className = 'couple-view cv-'+t;
+
+  // Mann
+  const mannP = document.getElementById('mannPerson');
+  mannP.className = 'cv-person p-'+t;
+  ['mFL','mFR'].forEach(id=>document.getElementById(id).className='cv-foot dim');
+  document.getElementById(info.foot==='L'?'mFL':'mFR').className='cv-foot '+cls;
+  const mD = DIR[info.dir]||{arrow:'—'};
+  document.getElementById('mArr').textContent = mD.arrow;
+  document.getElementById('mDsc').textContent = info.desc||'';
+
+  // Frau
+  const frauP = document.getElementById('frauPerson');
+  frauP.className = 'cv-person p-'+t;
+  ['fFL','fFR'].forEach(id=>document.getElementById(id).className='cv-foot dim');
+  if(info.follower){
+    const fr=info.follower;
+    document.getElementById(fr.foot==='L'?'fFL':'fFR').className='cv-foot '+cls;
+    const fD=DIR[fr.dir]||{arrow:'—'};
+    document.getElementById('fArr').textContent=fD.arrow;
+    document.getElementById('fDsc').textContent=fr.desc||'';
+  }
+
+  // Note strip
+  const noteEl=document.getElementById('cvNote');
+  if(info.note){ noteEl.textContent='💡 '+info.note; noteEl.className='cv-note visible'; }
+  else { noteEl.className='cv-note'; }
+}
+
+function clearCouple() {
+  document.getElementById('coupleView').className='couple-view';
+  document.getElementById('mannPerson').className='cv-person';
+  document.getElementById('frauPerson').className='cv-person';
+  ['mFL','mFR','fFL','fFR'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.className='cv-foot dim';
+  });
+  document.getElementById('mArr').textContent='—';
+  document.getElementById('fArr').textContent='—';
+  document.getElementById('mDsc').textContent='';
+  document.getElementById('fDsc').textContent='';
+  document.getElementById('cvNote').className='cv-note';
+}
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+function toggle() { running?stop():start(); }
+
+function start() {
+  ensureCtx();
+  running=true; beatIndex=0; nextBeatTime=actx.currentTime+0.12;
+  const btn=document.getElementById('startBtn');
+  btn.textContent='■ Stop'; btn.classList.add('running');
+  schedule();
+}
+
+function stop() {
+  running=false;
+  if(scheduleTimeout) clearTimeout(scheduleTimeout);
+  if(flashTimeout)    clearTimeout(flashTimeout);
+  const btn=document.getElementById('startBtn');
+  btn.textContent='▶ Start'; btn.classList.remove('running');
+  document.getElementById('cueDisplay').className='cue-display cue-idle';
+  document.getElementById('cueMain').textContent='—';
+  document.getElementById('cueCount').textContent='';
+  clearCouple();
+  document.querySelectorAll('.beat-block').forEach(bl=>bl.classList.remove('active-lang','active-kurz'));
+}
+
+function setBpm(val){ bpm=parseInt(val); document.getElementById('bpmLabel').textContent=bpm+' BPM'; }
+function setVol(val){ volume=parseInt(val)/100; document.getElementById('volLabel').textContent=val+' %'; if(masterOut) masterOut.gain.value=0.82*volume/0.7; }
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  const ids={langkurz:'modeLangKurz',zahl:'modeZahl',both:'modeBoth'};
+  document.getElementById(ids[m])?.classList.add('active');
+}
+function setPattern(id){
+  const was=running; if(running) stop();
+  currentPatternId=id; buildUI();
+  if(was) start();
+}
+
+// ── UI builder ────────────────────────────────────────────────────────────────
+function buildUI() {
+  const row=document.getElementById('patternRow');
+  row.innerHTML='';
+  const pattern=currentPattern();
+  let zahl=1;
+
+  pattern.steps.forEach((st,i)=>{
+    const col=document.createElement('div');
+    col.className='step-col';
+
+    const block=document.createElement('div');
+    block.className='beat-block '+st.type;
+    block.dataset.step=i;
+
+    const footEl=document.createElement('div');
+    footEl.className='bb-foot '+st.foot;
+    footEl.textContent=st.foot;
+
+    const nameEl=document.createElement('div');
+    nameEl.className='bb-name';
+    nameEl.textContent=st.name;
+
+    const dirEl=document.createElement('div');
+    dirEl.className='bb-dir';
+    dirEl.textContent=(DIR[st.dir]||{arrow:''}).arrow;
+
+    block.appendChild(footEl); block.appendChild(nameEl); block.appendChild(dirEl);
+
+    const num=document.createElement('div');
+    num.className='beat-num';
+    const end=zahl+st.beats-1;
+    num.textContent=st.beats>1?zahl+'–'+end:String(zahl);
+
+    col.appendChild(block); col.appendChild(num);
+    row.appendChild(col);
+    zahl+=st.beats;
+  });
+
+  document.getElementById('patternDesc').textContent=pattern.desc;
+
+  const sel=document.getElementById('patternSelector');
+  sel.innerHTML='';
+  PATTERNS.forEach(p=>{
+    const btn=document.createElement('button');
+    btn.className='pattern-btn'+(p.id===currentPatternId?' active':'');
+    btn.textContent=p.label;
+    btn.onclick=()=>setPattern(p.id);
+    sel.appendChild(btn);
+  });
+}
+
+buildUI();
+</script>
+</body>
+</html>

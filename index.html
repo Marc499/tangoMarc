@@ -620,10 +620,21 @@ const floor = (() => {
   const cx = W/2, cy = H/2;
   const RX = W*0.335, RY = H*0.30;         // Ronda-Oval
 
+  const GAP  = 30;                         // Abstand Mann ↔ Frau
+  const HOME = 8;                        // halbe Spurbreite der eigenen Füße
+  const LEN  = 19;                         // Schrittlänge
+
   let phi = 4.0;                           // Position auf der Ronda (startet unten links)
   let lat = 0;                             // seitlicher Versatz (+ = zur Mitte)
   let anim = null;
   let current = null;                      // aktueller Schritt (für aktive Füße)
+
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+  // Jeder Fuß hat eine eigene Position im Körpersystem der Person
+  // (f = eigene Blickrichtung, s = eigene linke Seite)
+  const homeFeet = () => ({ L:{f:0,s:HOME}, R:{f:0,s:-HOME} });
+  let mFeet = homeFeet(), fFeet = homeFeet();
 
   function trackPos(p, l) {
     return { x: cx + (RX - l) * Math.cos(p),
@@ -635,33 +646,84 @@ const floor = (() => {
   }
   const vx = a => Math.cos(a), vy = a => Math.sin(a);
 
-  // Schrittrichtung (aus Sicht des Mannes) → vor/zurück + seitlich
+  // Schrittrichtung (aus eigener Sicht) → vor/zurück + seitlich
   const MOVE = {
     forward:{f:1,s:0}, back:{f:-1,s:0},
     'side-l':{f:0,s:1}, 'side-r':{f:0,s:-1},
-    'fwd-l':{f:.8,s:.5}, 'fwd-r':{f:.8,s:-.5},
-    'bck-l':{f:-.8,s:.5}, 'bck-r':{f:-.8,s:-.5},
+    'fwd-l':{f:.85,s:.35}, 'fwd-r':{f:.85,s:-.35},
+    'bck-l':{f:-.85,s:.35}, 'bck-r':{f:-.85,s:-.35},
     close:{f:0,s:0}, weight:{f:0,s:0},
   };
+
+  // Präzises Ziel des Schreitfußes im eigenen System
+  function footTarget(feet, foot, dir) {
+    const home  = foot === 'L' ? HOME : -HOME;
+    const other = feet[foot === 'L' ? 'R' : 'L'];
+    switch (dir) {
+      case 'forward':  return { f:  LEN, s: home };
+      case 'back':     return { f: -LEN, s: home };
+      case 'fwd-l': case 'fwd-r':
+        // schräg vor, zwischen die Füße des Gegenübers: nahe der Mittellinie
+        return { f:  LEN, s: home * 0.2 };
+      case 'bck-l': case 'bck-r':
+        // schräg zurück: eigene Spur etwas öffnen, Platz für den Fuß des Partners
+        return { f: -LEN, s: home * 1.35 };
+      case 'side-l':   return { f: 0, s: home + 12 };
+      case 'side-r':   return { f: 0, s: home - 12 };
+      case 'close':    return { f: other.f, s: other.s + (foot === 'L' ? HOME*1.4 : -HOME*1.4) };
+      default:         return null;        // weight: Füße bleiben stehen
+    }
+  }
 
   function step(info, durMs) {
     current = info;
     const mv = MOVE[info.dir] || {f:0,s:0};
-    const len = 16;
+
+    // Zielzustand: Schreitfuß an sein Ziel, Standfuß unverändert
+    const mTo = { L:{...mFeet.L}, R:{...mFeet.R} };
+    const fTo = { L:{...fFeet.L}, R:{...fFeet.R} };
+    const mt = footTarget(mFeet, info.foot, info.dir);
+    if (mt) mTo[info.foot] = mt;
+    if (info.follower) {
+      const ft = footTarget(fFeet, info.follower.foot, info.follower.dir);
+      if (ft) fTo[info.follower.foot] = ft;
+    }
+
+    // Das Paar wandert mit; Standfüße bleiben am Boden stehen
+    // (Mann-System: Körper zieht an den Füßen vorbei, Frau-System spiegelbildlich)
+    const advF = mv.f * LEN * 0.5, advS = mv.s * LEN * 0.5;
+    ['L','R'].forEach(k => {
+      mTo[k].f = clamp(mTo[k].f - advF, -22, 23);
+      mTo[k].s = clamp(mTo[k].s - advS, -19, 19);
+      fTo[k].f = clamp(fTo[k].f + advF, -22, 23);
+      fTo[k].s = clamp(fTo[k].s + advS, -19, 19);
+    });
+
     const localR = Math.hypot(RX*Math.sin(phi), RY*Math.cos(phi));
-    const phiTo = phi + mv.f * len / Math.max(localR, 30);
-    const latTo = Math.max(-16, Math.min(34, lat + mv.s * len * 0.7));
-    animate(phiTo, latTo, durMs);
+    const phiTo = phi + mv.f * LEN / Math.max(localR, 30);
+    const latTo = clamp(lat + mv.s * LEN * 0.7, -16, 34);
+
+    animate({ phiTo, latTo, mTo, fTo }, durMs);
   }
 
-  function animate(phiTo, latTo, durMs) {
+  function animate(target, durMs) {
     if (anim) cancelAnimationFrame(anim);
-    const phi0 = phi, lat0 = lat, t0 = performance.now();
+    const s0 = { phi, lat,
+      m: { L:{...mFeet.L}, R:{...mFeet.R} },
+      f: { L:{...fFeet.L}, R:{...fFeet.R} } };
+    const t0 = performance.now();
+    const lerp = (a,b,e) => a + (b-a) * e;
     const tick = now => {
       const t = Math.min(1, (now - t0) / Math.max(durMs, 1));
       const e = 1 - Math.pow(1 - t, 3);
-      phi = phi0 + (phiTo - phi0) * e;
-      lat = lat0 + (latTo - lat0) * e;
+      phi = lerp(s0.phi, target.phiTo, e);
+      lat = lerp(s0.lat, target.latTo, e);
+      ['L','R'].forEach(k => {
+        mFeet[k].f = lerp(s0.m[k].f, target.mTo[k].f, e);
+        mFeet[k].s = lerp(s0.m[k].s, target.mTo[k].s, e);
+        fFeet[k].f = lerp(s0.f[k].f, target.fTo[k].f, e);
+        fFeet[k].s = lerp(s0.f[k].s, target.fTo[k].s, e);
+      });
       draw();
       if (t < 1) anim = requestAnimationFrame(tick);
     };
@@ -670,7 +732,9 @@ const floor = (() => {
 
   function reset() {
     if (anim) cancelAnimationFrame(anim);
-    current = null; phi = 4.0; lat = 0; draw();
+    current = null; phi = 4.0; lat = 0;
+    mFeet = homeFeet(); fFeet = homeFeet();
+    draw();
   }
 
   // Fuß als ausgerichtete Ellipse: Sohle + Spitze in Blickrichtung
@@ -679,28 +743,12 @@ const floor = (() => {
     if (glow) { ctx.shadowColor = glow; ctx.shadowBlur = 11; }
     ctx.fillStyle = fill;
     ctx.beginPath();
-    ctx.ellipse(x, y, 8.5, 4, ang, 0, Math.PI*2);
+    ctx.ellipse(x, y, 10.5, 4.4, ang, 0, Math.PI*2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(x + vx(ang)*8, y + vy(ang)*8, 4, 3, ang, 0, Math.PI*2);
+    ctx.ellipse(x + vx(ang)*10, y + vy(ang)*10, 4.6, 3.4, ang, 0, Math.PI*2);
     ctx.fill();
     ctx.restore();
-  }
-
-  function drawPerson(px, py, facing, colors, activeFoot, stepDir, type) {
-    const left = facing - Math.PI/2;       // linke Seite der Person (Canvas: y nach unten)
-    ['L','R'].forEach(f => {
-      const side = f === 'L' ? 1 : -1;
-      let x = px + vx(left)*7*side, y = py + vy(left)*7*side;
-      const isActive = activeFoot === f;
-      if (isActive && stepDir) {           // aktiver Fuß setzt in Schrittrichtung vor
-        const mv = MOVE[stepDir] || {f:0,s:0};
-        x += (vx(facing)*mv.f + vx(left)*mv.s) * 9;
-        y += (vy(facing)*mv.f + vy(left)*mv.s) * 9;
-      }
-      const glowCol = type === 'lang' ? 'rgba(224,80,48,0.9)' : 'rgba(48,160,224,0.9)';
-      drawFoot(x, y, facing, isActive ? colors.active : colors.dim, isActive ? glowCol : null);
-    });
   }
 
   function draw() {
@@ -735,20 +783,30 @@ const floor = (() => {
     // Paar: Mann auf der Ronda, Frau steht ihm gegenüber
     const p = trackPos(phi, lat);
     const h = tangent(phi);
-    const fx = p.x + vx(h)*20, fy = p.y + vy(h)*20;
+    const fBase = { x: p.x + vx(h)*GAP, y: p.y + vy(h)*GAP };
     const info = current;
-    drawPerson(p.x, p.y, h,
-      { dim:'#55431f', active:'#e8b030' },
-      info ? info.foot : null, info ? info.dir : null, info ? info.stepType : null);
-    drawPerson(fx, fy, h + Math.PI,
-      { dim:'#4a2836', active:'#e070a0' },
-      info && info.follower ? info.follower.foot : null,
-      info && info.follower ? info.follower.dir : null,
-      info ? info.stepType : null);
+    const glowCol = t => t === 'lang' ? 'rgba(224,80,48,0.9)' : 'rgba(48,160,224,0.9)';
+
+    const drawSet = (base, fwd, feet, colors, activeFoot, type) => {
+      const left = fwd - Math.PI/2;
+      ['L','R'].forEach(k => {
+        const ft = feet[k];
+        const x = base.x + vx(fwd)*ft.f + vx(left)*ft.s;
+        const y = base.y + vy(fwd)*ft.f + vy(left)*ft.s;
+        const act = activeFoot === k;
+        const toeOut = k === 'L' ? -0.1 : 0.1;   // leicht ausgestellte Fußspitzen
+        drawFoot(x, y, fwd + toeOut, act ? colors.active : colors.dim, act ? glowCol(type) : null);
+      });
+    };
+    // Frau zuerst, Mann darüber — so sieht man seinen Fuß zwischen ihren
+    drawSet(fBase, h + Math.PI, fFeet, { dim:'#4a2836', active:'#e070a0' },
+      info && info.follower ? info.follower.foot : null, info ? info.stepType : null);
+    drawSet(p, h, mFeet, { dim:'#55431f', active:'#e8b030' },
+      info ? info.foot : null, info ? info.stepType : null);
     // Beschriftung
     ctx.fillStyle = '#6a5a4a'; ctx.font = '9px Georgia'; ctx.textAlign = 'center';
-    ctx.fillText('M', p.x - vx(h)*17, p.y - vy(h)*17 + 3);
-    ctx.fillText('F', fx + vx(h)*17, fy + vy(h)*17 + 3);
+    ctx.fillText('M', p.x - vx(h)*24, p.y - vy(h)*24 + 3);
+    ctx.fillText('F', fBase.x + vx(h)*24, fBase.y + vy(h)*24 + 3);
   }
 
   draw();

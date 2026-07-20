@@ -101,13 +101,13 @@
     }
 
     .bb-foot {
-      width: 22px; height: 22px; border-radius: 50%;
+      width: 15px; height: 22px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.62rem; font-weight: bold;
+      font-size: 0.58rem; font-weight: bold;
       transition: background 0.08s, color 0.08s;
     }
-    .bb-foot.L { background: #1e1808; color: #a8875a; border: 1px solid #4a3820; }
-    .bb-foot.R { background: #081818; color: #48a890; border: 1px solid #1e4038; }
+    .bb-foot.L { background: #1e1808; color: #a8875a; border: 1px solid #4a3820; transform: rotate(-10deg); }
+    .bb-foot.R { background: #081818; color: #48a890; border: 1px solid #1e4038; transform: rotate(10deg); }
     .beat-block.active-lang .bb-foot.L,
     .beat-block.active-kurz .bb-foot.L { background: #e8b030; color: #080600; border-color: #e8b030; }
     .beat-block.active-lang .bb-foot.R,
@@ -135,82 +135,31 @@
     .couple-view.cv-lang { border-color: rgba(220,80,40,0.4); }
     .couple-view.cv-kurz { border-color: rgba(40,140,220,0.4); }
 
-    .cv-stack {
+    #floorCanvas { display: block; width: 100%; height: auto; }
+
+    .cv-info {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding: 0.85rem 0.4rem;
+      gap: 0.2rem;
+      padding: 0.5rem 0.9rem 0.55rem;
+      border-top: 1px solid #2a2018;
     }
-
-    .cv-person {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.35rem;
+    .cv-line {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.72rem; color: #9a8a76; min-height: 1.25em;
     }
-
-    .cv-label {
-      font-size: 0.66rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #6a5a4a;
+    .cv-tag {
+      font-size: 0.6rem; letter-spacing: 0.1em;
+      text-transform: uppercase; width: 3.4em; flex-shrink: 0;
     }
-    .cv-label em { font-style: normal; color: #4a3a28; font-size: 0.58rem; }
-
-    .cv-feet {
-      display: flex;
-      gap: 0.5rem;
+    .tag-m { color: #e8b030; }
+    .tag-f { color: #e070a0; }
+    .cv-arrow-s {
+      font-size: 0.95rem; width: 1.2em; text-align: center;
+      color: #6a5a4a; transition: color 0.1s;
     }
-
-    .cv-foot {
-      width: 34px; height: 34px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.7rem; font-weight: bold; letter-spacing: 0;
-      transition: all 0.1s;
-    }
-    .cv-foot.dim {
-      background: #1a1610; color: #6a5540;
-      border: 2px solid #32281c;
-    }
-    .cv-foot.active-lang {
-      background: #e05030; color: #fff;
-      border: 2px solid #ff7050;
-      box-shadow: 0 0 14px rgba(220,80,40,0.55);
-      transform: scale(1.12);
-    }
-    .cv-foot.active-kurz {
-      background: #30a0e0; color: #fff;
-      border: 2px solid #60c0f0;
-      box-shadow: 0 0 14px rgba(40,140,220,0.55);
-      transform: scale(1.12);
-    }
-
-    .cv-arrow {
-      font-size: 1.7rem;
-      line-height: 1;
-      color: #4a3a28;
-      transition: color 0.1s;
-      min-height: 1.8rem;
-    }
-    .cv-person.p-lang .cv-arrow { color: #e05030; }
-    .cv-person.p-kurz .cv-arrow { color: #30a0e0; }
-
-    .cv-desc {
-      font-size: 0.68rem;
-      color: #7a6a5a;
-      text-align: center;
-      min-height: 1em;
-      max-width: 240px;
-      line-height: 1.3;
-    }
-
-    .cv-divider {
-      width: 66%;
-      height: 1px;
-      background: #2a2018;
-      margin: 0.45rem 0;
-    }
+    .couple-view.cv-lang .cv-arrow-s { color: #e05030; }
+    .couple-view.cv-kurz .cv-arrow-s { color: #30a0e0; }
 
     /* Tip/note strip at the bottom */
     .cv-note {
@@ -288,8 +237,8 @@
     .ld { width: 10px; height: 10px; }
     .ld-la { background: #e05030; border-radius: 2px; }
     .ld-ku { background: #30a0e0; border-radius: 2px; }
-    .ld-m  { background: #e8b030; border-radius: 50%; }
-    .ld-f  { background: #e070a0; border-radius: 50%; }
+    .ld-m  { background: #e8b030; border-radius: 50%; width: 8px; height: 13px; }
+    .ld-f  { background: #e070a0; border-radius: 50%; width: 8px; height: 13px; }
   </style>
 </head>
 <body>
@@ -308,31 +257,10 @@
 
 <!-- Couple view -->
 <div class="couple-view" id="coupleView">
-  <div class="cv-stack">
-
-    <div class="cv-person" id="frauPerson">
-      <div class="cv-label">Frau <em>· Folgend · steht gegenüber</em></div>
-      <div class="cv-desc" id="fDsc"></div>
-      <div class="cv-arrow" id="fArr">—</div>
-      <!-- Frau steht gegenüber: ihr rechter Fuß ist aus Zuschauersicht links -->
-      <div class="cv-feet">
-        <div class="cv-foot dim" id="fFR">R</div>
-        <div class="cv-foot dim" id="fFL">L</div>
-      </div>
-    </div>
-
-    <div class="cv-divider"></div>
-
-    <div class="cv-person" id="mannPerson">
-      <div class="cv-feet">
-        <div class="cv-foot dim" id="mFL">L</div>
-        <div class="cv-foot dim" id="mFR">R</div>
-      </div>
-      <div class="cv-arrow" id="mArr">—</div>
-      <div class="cv-desc" id="mDsc"></div>
-      <div class="cv-label">Mann <em>· Führend</em></div>
-    </div>
-
+  <canvas id="floorCanvas" width="920" height="560"></canvas>
+  <div class="cv-info">
+    <div class="cv-line"><span class="cv-tag tag-f">Frau</span><span class="cv-arrow-s" id="fArr">—</span><span id="fDsc"></span></div>
+    <div class="cv-line"><span class="cv-tag tag-m">Mann</span><span class="cv-arrow-s" id="mArr">—</span><span id="mDsc"></span></div>
   </div>
   <div class="cv-note" id="cvNote"></div>
 </div>
@@ -681,6 +609,152 @@ function schedule() {
   scheduleTimeout=setTimeout(schedule,50);
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// MILONGA-TANZFLÄCHE
+// ══════════════════════════════════════════════════════════════════════════════
+const floor = (() => {
+  const cv = document.getElementById('floorCanvas');
+  const ctx = cv.getContext('2d');
+  const W = 460, H = 280;                  // logische Größe (Canvas ist 2x für Schärfe)
+  ctx.scale(cv.width / W, cv.height / H);
+  const cx = W/2, cy = H/2;
+  const RX = W*0.335, RY = H*0.30;         // Ronda-Oval
+
+  let phi = 4.0;                           // Position auf der Ronda (startet unten links)
+  let lat = 0;                             // seitlicher Versatz (+ = zur Mitte)
+  let anim = null;
+  let current = null;                      // aktueller Schritt (für aktive Füße)
+
+  function trackPos(p, l) {
+    return { x: cx + (RX - l) * Math.cos(p),
+             y: cy - (RY - l * RY / RX) * Math.sin(p) };
+  }
+  function tangent(p) {                    // Blickrichtung des Mannes: gegen den Uhrzeigersinn
+    const a = trackPos(p, lat), b = trackPos(p + 0.02, lat);
+    return Math.atan2(b.y - a.y, b.x - a.x);
+  }
+  const vx = a => Math.cos(a), vy = a => Math.sin(a);
+
+  // Schrittrichtung (aus Sicht des Mannes) → vor/zurück + seitlich
+  const MOVE = {
+    forward:{f:1,s:0}, back:{f:-1,s:0},
+    'side-l':{f:0,s:1}, 'side-r':{f:0,s:-1},
+    'fwd-l':{f:.8,s:.5}, 'fwd-r':{f:.8,s:-.5},
+    'bck-l':{f:-.8,s:.5}, 'bck-r':{f:-.8,s:-.5},
+    close:{f:0,s:0}, weight:{f:0,s:0},
+  };
+
+  function step(info, durMs) {
+    current = info;
+    const mv = MOVE[info.dir] || {f:0,s:0};
+    const len = 16;
+    const localR = Math.hypot(RX*Math.sin(phi), RY*Math.cos(phi));
+    const phiTo = phi + mv.f * len / Math.max(localR, 30);
+    const latTo = Math.max(-16, Math.min(34, lat + mv.s * len * 0.7));
+    animate(phiTo, latTo, durMs);
+  }
+
+  function animate(phiTo, latTo, durMs) {
+    if (anim) cancelAnimationFrame(anim);
+    const phi0 = phi, lat0 = lat, t0 = performance.now();
+    const tick = now => {
+      const t = Math.min(1, (now - t0) / Math.max(durMs, 1));
+      const e = 1 - Math.pow(1 - t, 3);
+      phi = phi0 + (phiTo - phi0) * e;
+      lat = lat0 + (latTo - lat0) * e;
+      draw();
+      if (t < 1) anim = requestAnimationFrame(tick);
+    };
+    anim = requestAnimationFrame(tick);
+  }
+
+  function reset() {
+    if (anim) cancelAnimationFrame(anim);
+    current = null; phi = 4.0; lat = 0; draw();
+  }
+
+  // Fuß als ausgerichtete Ellipse: Sohle + Spitze in Blickrichtung
+  function drawFoot(x, y, ang, fill, glow) {
+    ctx.save();
+    if (glow) { ctx.shadowColor = glow; ctx.shadowBlur = 11; }
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.ellipse(x, y, 8.5, 4, ang, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x + vx(ang)*8, y + vy(ang)*8, 4, 3, ang, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawPerson(px, py, facing, colors, activeFoot, stepDir, type) {
+    const left = facing - Math.PI/2;       // linke Seite der Person (Canvas: y nach unten)
+    ['L','R'].forEach(f => {
+      const side = f === 'L' ? 1 : -1;
+      let x = px + vx(left)*7*side, y = py + vy(left)*7*side;
+      const isActive = activeFoot === f;
+      if (isActive && stepDir) {           // aktiver Fuß setzt in Schrittrichtung vor
+        const mv = MOVE[stepDir] || {f:0,s:0};
+        x += (vx(facing)*mv.f + vx(left)*mv.s) * 9;
+        y += (vy(facing)*mv.f + vy(left)*mv.s) * 9;
+      }
+      const glowCol = type === 'lang' ? 'rgba(224,80,48,0.9)' : 'rgba(48,160,224,0.9)';
+      drawFoot(x, y, facing, isActive ? colors.active : colors.dim, isActive ? glowCol : null);
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // Holzboden
+    for (let i = 0; i < 12; i++) {
+      ctx.fillStyle = i % 2 ? '#16100a' : '#191209';
+      ctx.fillRect(i * W/12, 0, W/12 + 1, H);
+    }
+    ctx.strokeStyle = '#2a2018'; ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, W-2, H-2);
+    // Tische mit Kerzenlicht am Rand
+    [[26,22],[W-26,22],[26,H-22],[W-26,H-22],[W/2,16],[W/2,H-16]].forEach(([tx,ty]) => {
+      ctx.fillStyle = '#241a10';
+      ctx.beginPath(); ctx.arc(tx, ty, 7, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(200,168,122,0.35)';
+      ctx.beginPath(); ctx.arc(tx, ty, 2.2, 0, Math.PI*2); ctx.fill();
+    });
+    // Ronda (Tanzrichtung, gegen den Uhrzeigersinn)
+    ctx.setLineDash([3, 7]);
+    ctx.strokeStyle = 'rgba(200,168,122,0.16)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(cx, cy, RX, RY, 0, 0, Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+    // Richtungspfeil oben auf der Ronda
+    ctx.fillStyle = 'rgba(200,168,122,0.35)';
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, cy - RY);
+    ctx.lineTo(cx + 4, cy - RY - 4);
+    ctx.lineTo(cx + 4, cy - RY + 4);
+    ctx.fill();
+
+    // Paar: Mann auf der Ronda, Frau steht ihm gegenüber
+    const p = trackPos(phi, lat);
+    const h = tangent(phi);
+    const fx = p.x + vx(h)*20, fy = p.y + vy(h)*20;
+    const info = current;
+    drawPerson(p.x, p.y, h,
+      { dim:'#55431f', active:'#e8b030' },
+      info ? info.foot : null, info ? info.dir : null, info ? info.stepType : null);
+    drawPerson(fx, fy, h + Math.PI,
+      { dim:'#4a2836', active:'#e070a0' },
+      info && info.follower ? info.follower.foot : null,
+      info && info.follower ? info.follower.dir : null,
+      info ? info.stepType : null);
+    // Beschriftung
+    ctx.fillStyle = '#6a5a4a'; ctx.font = '9px Georgia'; ctx.textAlign = 'center';
+    ctx.fillText('M', p.x - vx(h)*17, p.y - vy(h)*17 + 3);
+    ctx.fillText('F', fx + vx(h)*17, fy + vy(h)*17 + 3);
+  }
+
+  draw();
+  return { step, reset };
+})();
+
 // ── Visuals ───────────────────────────────────────────────────────────────────
 function updateVisuals(info) {
   if(!running) return;
@@ -705,51 +779,34 @@ function updateVisuals(info) {
 
 function showCouple(info) {
   const t = info.stepType; // 'lang' or 'kurz'
-  const cls = 'active-'+t;
-
-  // Couple-view border
   document.getElementById('coupleView').className = 'couple-view cv-'+t;
 
-  // Mann
-  const mannP = document.getElementById('mannPerson');
-  mannP.className = 'cv-person p-'+t;
-  ['mFL','mFR'].forEach(id=>document.getElementById(id).className='cv-foot dim');
-  document.getElementById(info.foot==='L'?'mFL':'mFR').className='cv-foot '+cls;
   const mD = DIR[info.dir]||{arrow:'—'};
   document.getElementById('mArr').textContent = mD.arrow;
   document.getElementById('mDsc').textContent = info.desc||'';
 
-  // Frau
-  const frauP = document.getElementById('frauPerson');
-  frauP.className = 'cv-person p-'+t;
-  ['fFL','fFR'].forEach(id=>document.getElementById(id).className='cv-foot dim');
   if(info.follower){
     const fr=info.follower;
-    document.getElementById(fr.foot==='L'?'fFL':'fFR').className='cv-foot '+cls;
     const fD=DIR[fr.dir]||{arrow:'—'};
     document.getElementById('fArr').textContent=FLIP[fD.arrow]||fD.arrow;
     document.getElementById('fDsc').textContent=fr.desc||'';
   }
 
-  // Note strip
   const noteEl=document.getElementById('cvNote');
   if(info.note){ noteEl.textContent='💡 '+info.note; noteEl.className='cv-note visible'; }
   else { noteEl.className='cv-note'; }
+
+  floor.step(info, Math.min(420, beatDuration()*1000*0.6));
 }
 
 function clearCouple() {
   document.getElementById('coupleView').className='couple-view';
-  document.getElementById('mannPerson').className='cv-person';
-  document.getElementById('frauPerson').className='cv-person';
-  ['mFL','mFR','fFL','fFR'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.className='cv-foot dim';
-  });
   document.getElementById('mArr').textContent='—';
   document.getElementById('fArr').textContent='—';
   document.getElementById('mDsc').textContent='';
   document.getElementById('fDsc').textContent='';
   document.getElementById('cvNote').className='cv-note';
+  floor.reset();
 }
 
 // ── Controls ──────────────────────────────────────────────────────────────────

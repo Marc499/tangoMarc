@@ -106,20 +106,20 @@
       font-size: 0.62rem; font-weight: bold;
       transition: background 0.08s, color 0.08s;
     }
-    .bb-foot.L { background: #1e1808; color: #7a6030; border: 1px solid #3a2a14; }
-    .bb-foot.R { background: #081818; color: #308070; border: 1px solid #143028; }
+    .bb-foot.L { background: #1e1808; color: #a8875a; border: 1px solid #4a3820; }
+    .bb-foot.R { background: #081818; color: #48a890; border: 1px solid #1e4038; }
     .beat-block.active-lang .bb-foot.L,
     .beat-block.active-kurz .bb-foot.L { background: #e8b030; color: #080600; border-color: #e8b030; }
     .beat-block.active-lang .bb-foot.R,
     .beat-block.active-kurz .bb-foot.R { background: #30c0a0; color: #001010; border-color: #30c0a0; }
 
-    .bb-name { font-size: 0.62rem; letter-spacing: 0.07em; color: #5a4a38; transition: color 0.08s; }
+    .bb-name { font-size: 0.62rem; letter-spacing: 0.07em; color: #8a7660; transition: color 0.08s; }
     .beat-block.active-lang .bb-name,
     .beat-block.active-kurz .bb-name { color: #e8dcc8; }
-    .bb-dir { font-size: 0.95rem; line-height: 1; color: #3a2a1a; transition: color 0.08s; }
+    .bb-dir { font-size: 0.95rem; line-height: 1; color: #6a5540; transition: color 0.08s; }
     .beat-block.active-lang .bb-dir { color: #e8c070; }
     .beat-block.active-kurz .bb-dir { color: #70d0f0; }
-    .beat-num { font-size: 0.58rem; color: #4a3a28; letter-spacing: 0.04em; }
+    .beat-num { font-size: 0.58rem; color: #7a6650; letter-spacing: 0.04em; }
 
     /* ── Couple view ── */
     .couple-view {
@@ -135,19 +135,18 @@
     .couple-view.cv-lang { border-color: rgba(220,80,40,0.4); }
     .couple-view.cv-kurz { border-color: rgba(40,140,220,0.4); }
 
-    .cv-columns {
-      display: flex;
-      min-height: 120px;
-    }
-
-    .cv-person {
-      flex: 1;
+    .cv-stack {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 0.45rem;
-      padding: 0.9rem 0.4rem 0.7rem;
+      padding: 0.85rem 0.4rem;
+    }
+
+    .cv-person {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
     }
 
     .cv-label {
@@ -171,8 +170,8 @@
       transition: all 0.1s;
     }
     .cv-foot.dim {
-      background: #1a1610; color: #4a3a28;
-      border: 2px solid #2a2018;
+      background: #1a1610; color: #6a5540;
+      border: 2px solid #32281c;
     }
     .cv-foot.active-lang {
       background: #e05030; color: #fff;
@@ -202,14 +201,15 @@
       color: #7a6a5a;
       text-align: center;
       min-height: 1em;
-      max-width: 100px;
+      max-width: 240px;
       line-height: 1.3;
     }
 
     .cv-divider {
-      width: 1px;
+      width: 66%;
+      height: 1px;
       background: #2a2018;
-      margin: 0.6rem 0;
+      margin: 0.45rem 0;
     }
 
     /* Tip/note strip at the bottom */
@@ -308,29 +308,29 @@
 
 <!-- Couple view -->
 <div class="couple-view" id="coupleView">
-  <div class="cv-columns">
+  <div class="cv-stack">
+
+    <div class="cv-person" id="frauPerson">
+      <div class="cv-label">Frau <em>· Folgend · steht gegenüber</em></div>
+      <div class="cv-desc" id="fDsc"></div>
+      <div class="cv-arrow" id="fArr">—</div>
+      <!-- Frau steht gegenüber: ihr rechter Fuß ist aus Zuschauersicht links -->
+      <div class="cv-feet">
+        <div class="cv-foot dim" id="fFR">R</div>
+        <div class="cv-foot dim" id="fFL">L</div>
+      </div>
+    </div>
+
+    <div class="cv-divider"></div>
 
     <div class="cv-person" id="mannPerson">
-      <div class="cv-label">Mann <em>· Führend</em></div>
       <div class="cv-feet">
         <div class="cv-foot dim" id="mFL">L</div>
         <div class="cv-foot dim" id="mFR">R</div>
       </div>
       <div class="cv-arrow" id="mArr">—</div>
       <div class="cv-desc" id="mDsc"></div>
-    </div>
-
-    <div class="cv-divider"></div>
-
-    <div class="cv-person" id="frauPerson">
-      <div class="cv-label">Frau <em>· Folgend</em></div>
-      <!-- Frau's R is on physical-left (she faces opposite), shown from HER perspective: L left, R right -->
-      <div class="cv-feet">
-        <div class="cv-foot dim" id="fFL">L</div>
-        <div class="cv-foot dim" id="fFR">R</div>
-      </div>
-      <div class="cv-arrow" id="fArr">—</div>
-      <div class="cv-desc" id="fDsc"></div>
+      <div class="cv-label">Mann <em>· Führend</em></div>
     </div>
 
   </div>
@@ -383,6 +383,9 @@ const DIR = {
   close:    { arrow:'↕', label:'schließen'             },
   weight:   { arrow:'●', label:'Gewicht'               },
 };
+
+// Frau steht gegenüber: ihre Richtungen erscheinen aus Zuschauersicht um 180° gedreht
+const FLIP = { '↑':'↓', '↓':'↑', '←':'→', '→':'←', '↖':'↘', '↗':'↙', '↙':'↗', '↘':'↖' };
 
 // ── Patterns ─────────────────────────────────────────────────────────────────
 // Each step: leader (Mann) data + follower (Frau) data from each person's OWN perspective
@@ -696,17 +699,8 @@ function updateVisuals(info) {
     if(i===info.step) bl.classList.add(info.stepType==='lang'?'active-lang':'active-kurz');
   });
 
-  // Couple view
+  // Couple view — bleibt bis zum nächsten Schritt sichtbar, nichts wird ausgeblendet
   showCouple(info);
-
-  if(flashTimeout) clearTimeout(flashTimeout);
-  flashTimeout=setTimeout(()=>{
-    document.getElementById('cueDisplay').className='cue-display cue-idle';
-    document.getElementById('cueMain').textContent='—';
-    document.getElementById('cueCount').textContent='';
-    clearCouple();
-    document.querySelectorAll('.beat-block').forEach(bl=>bl.classList.remove('active-lang','active-kurz'));
-  }, beatDuration()*1000*0.72);
 }
 
 function showCouple(info) {
@@ -733,7 +727,7 @@ function showCouple(info) {
     const fr=info.follower;
     document.getElementById(fr.foot==='L'?'fFL':'fFR').className='cv-foot '+cls;
     const fD=DIR[fr.dir]||{arrow:'—'};
-    document.getElementById('fArr').textContent=fD.arrow;
+    document.getElementById('fArr').textContent=FLIP[fD.arrow]||fD.arrow;
     document.getElementById('fDsc').textContent=fr.desc||'';
   }
 
